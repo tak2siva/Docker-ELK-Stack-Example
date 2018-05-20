@@ -21,8 +21,14 @@ services:
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./apache.log:/tmp/log/apache.log
+      - ./GOOG.csv:/tmp/log/GOOG.csv
     ports:
       - "5000:5000"
+      - "9600:9600"
+      - "5044:5044"
+    expose:
+      - 5044
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -42,6 +48,33 @@ services:
     depends_on:
       - elasticsearch
 
+  cerebro:
+    image: yannart/cerebro
+    ports:
+      - "9000:9000"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+    # volumes:
+      # - ./cerebro/logs:/opt/cerebro/logs
+      # - ./cerebro/conf:/opt/cerebro/conf
+
+  filebeat:
+    build:
+      context: filebeat/
+    volumes:
+      - ./filebeat/conf/:/etc/filebeat/:ro
+      - ./beats.log:/logs/beats.log
+      - ./beats.log:/tmp/beats.log
+    command: "filebeat -v -e -c /etc/filebeat/filebeat.yml"
+    environment:
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5044
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
 networks:
 
   elk:

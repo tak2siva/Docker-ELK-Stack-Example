@@ -1,0 +1,8 @@
+filebeat:
+  prospectors:
+    - paths:
+         - /logs/*.log
+      tags: ["envoy-access-log"]
+
+output.logstash:
+    hosts: ["logstash:5044"]
